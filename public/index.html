@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7faf7">
+  <title>ПРАЙМ — чекап по вашей карте здоровья</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="ПРАЙМ — на главную"><span class="brand-mark">✳</span><span>ПРАЙМ<span class="brand-dot">.</span></span></a>
+    <nav aria-label="Основная навигация"><a href="#profile">Карта здоровья</a><a href="#recommendation">Пакеты и цены</a><a href="#booking">Запись</a><a href="#clinic">Для клиники</a></nav>
+    <a class="header-action" href="#profile">Открыть карту <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main id="top">
+    <section class="hero shell" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-line"></span> УМНЫЙ ЧЕКАП В ПРАЙМ</div>
+        <h1 id="hero-title">Ваша история<br>здоровья. <em>Ваш план.</em></h1>
+        <p class="hero-lead">Сервис изучает карту здоровья, подбирает программу с понятной ценой и предлагает время, когда в клинике меньше посетителей.</p>
+        <div class="hero-actions"><a class="button button-primary" href="#profile">Посмотреть свою карту <span aria-hidden="true">↗</span></a><span class="hero-time">Без длинной анкеты</span></div>
+        <div class="hero-trust"><span class="trust-icon" aria-hidden="true">✦</span><span>В демо используются вымышленные карты пациентов.</span></div>
+      </div>
+      <div class="hero-visual record-visual" aria-hidden="true">
+        <div class="visual-orbit"></div>
+        <div class="record-preview">
+          <div class="preview-head"><span class="preview-symbol">✳</span><span>КАРТА ЗДОРОВЬЯ</span><span class="preview-status">Собрана</span></div>
+          <div class="preview-person"><span class="preview-avatar">А</span><div><strong>Всё важное в одном месте</strong><small>История · анализы · назначения</small></div></div>
+          <div class="preview-line"><span>Последний осмотр</span><b>18.11.2025</b></div>
+          <div class="preview-line"><span>Показатели</span><b>В динамике</b></div>
+          <div class="preview-footer"><span>Подходящий чекап</span><strong>Подобран по карте <span>↗</span></strong></div>
+        </div>
+        <div class="floating-card float-top"><span class="float-icon">◷</span><div><small>РАСПИСАНИЕ</small><strong>Меньше ожидания</strong></div></div>
+        <div class="floating-card float-bottom"><span class="float-check">✓</span><div><small>СТОИМОСТЬ</small><strong>Видна заранее</strong></div></div>
+      </div>
+    </section>
+
+    <section class="how-section shell" aria-labelledby="how-title">
+      <div class="section-intro"><span class="section-kicker">ТРИ ПРОСТЫХ ШАГА</span><h2 id="how-title">От истории здоровья до записи</h2></div>
+      <div class="steps">
+        <article class="step"><span class="step-number">01</span><div class="step-icon">▤</div><h3>Откройте карту</h3><p>Данные о прошлых визитах, анализах и назначениях уже под рукой.</p></article>
+        <article class="step"><span class="step-number">02</span><div class="step-icon">✳</div><h3>Выберите программу</h3><p>Понятная рекомендация, состав пакета и цена из прайса клиники.</p></article>
+        <article class="step"><span class="step-number">03</span><div class="step-icon">◷</div><h3>Найдите удобное время</h3><p>Варианты с меньшей загрузкой и напоминание о следующем контакте.</p></article>
+      </div>
+    </section>
+
+    <section id="profile" class="profile-section">
+      <div class="shell profile-layout">
+        <div class="profile-intro"><span class="section-kicker">ШАГ 01 · КАРТА ЗДОРОВЬЯ</span><h2>Начнём с того,<br>что уже известно.</h2><p>Для демонстрации выберите готовую карту. В рабочей версии данные могут поступать из системы клиники после авторизации пациента и его согласия.</p><div class="demo-alert"><span>✦</span><span>ДамуМед и календарь ПРАЙМ пока не подключены. ИИН для демо не нужен.</span></div><div id="profile-choices" class="profile-choices" aria-label="Демонстрационные карты"></div></div>
+        <div class="profile-card"><div class="profile-card-head"><div><span class="card-kicker">ДЕМОНСТРАЦИОННАЯ КАРТА</span><h3 id="profile-name">Загружаем карту...</h3></div><span class="profile-card-symbol">✳</span></div><div id="profile-details"></div><button id="recommend-button" class="button button-primary full-button" type="button" disabled>Подобрать чекап по карте <span aria-hidden="true">↗</span></button><p id="profile-error" class="inline-error" role="alert" hidden></p></div>
+      </div>
+    </section>
+
+    <section id="recommendation" class="result-section shell" hidden aria-live="polite">
+      <div class="result-heading"><div><span class="section-kicker">ШАГ 02 · ПРОГРАММЫ ПРАЙМ</span><h2>Пакеты с понятной ценой</h2><p>Рекомендация учитывает данные карты и историю обследований.</p></div><a class="price-source" id="price-source" href="https://primegc.kz/price-list-strahovie/" target="_blank" rel="noopener noreferrer">Официальный прайс <span aria-hidden="true">↗</span></a></div>
+      <div id="recommendation-reasons" class="health-reasons"></div>
+      <div id="packages" class="package-grid"></div>
+      <p class="price-note">Цены справочные. Состав и итоговую стоимость подтвердит клиника. Программа согласуется с врачом.</p>
+    </section>
+
+    <section id="booking" class="booking-section" hidden>
+      <div class="shell booking-layout"><div class="booking-copy"><span class="section-kicker">ШАГ 03 · ЗАПИСЬ</span><h2>Выберите спокойное время</h2><p>Сервис ставит выше окна с меньшей ожидаемой загрузкой. После подключения календаря клиники здесь будут её реальные свободные часы.</p><div class="booking-selection"><span>ВЫБРАННАЯ ПРОГРАММА</span><strong id="selected-program-name">—</strong><b id="selected-program-price">—</b></div><p class="booking-disclaimer">Сейчас показано демонстрационное расписание. Заявка остаётся в этом MVP и не подтверждает запись в ПРАЙМ.</p></div><div class="slots-panel"><div class="slots-head"><h3>Ближайшие окна</h3><span class="demo-badge">ДЕМО РАСПИСАНИЕ</span></div><div id="slots-list" class="slots-list"></div><button id="book-button" class="button button-primary full-button" type="button" disabled>Сохранить демо запись <span aria-hidden="true">↗</span></button><p id="booking-message" class="booking-message" role="status"></p></div><div class="day-route"><div><span class="section-kicker">ВАШ ДЕНЬ В КЛИНИКЕ</span><h3>Маршрут без лишнего ожидания</h3><p>Порядок и время примерные. Врач и администратор подтвердят маршрут перед визитом.</p></div><ol id="route-list"></ol></div></div>
+    </section>
+
+    <section id="journey" class="journey-section shell" aria-labelledby="journey-title"><div class="journey-head"><div><span class="section-kicker">ПОСЛЕ ВИЗИТА</span><h2 id="journey-title">Здоровье в динамике</h2><p>Результаты, история посещений и следующий контакт с клиникой в одном месте.</p></div><span class="journey-decor" aria-hidden="true">✳</span></div><div class="journey-grid"><article class="journey-card"><div class="journey-card-heading"><span class="panel-icon">▤</span><h3>История и показатели</h3></div><div id="health-timeline" class="health-timeline"><p class="muted">Выберите карту, чтобы увидеть историю.</p></div></article><article class="journey-card"><div class="journey-card-heading"><span class="panel-icon warm">◷</span><h3>Следующий контакт</h3></div><div id="follow-up-panel"><p class="muted">После визита здесь появится дата для обсуждения дальнейшего плана с врачом.</p></div></article></div></section>
+
+    <section id="clinic" class="clinic-section"><div class="shell"><div class="clinic-heading"><div><span class="section-kicker">ПАНЕЛЬ КЛИНИКИ · ДЕМО ДАННЫЕ</span><h2>Каждый шаг виден в цифрах</h2><p>Показатели рассчитаны из демонстрационных записей за последние 30 дней.</p></div><button id="refresh-metrics" class="text-button" type="button">Обновить показатели ↗</button></div><div id="metrics" class="metrics-grid"></div><div class="metrics-explain"><div><strong>Продажи</strong><span>Оплаченные чекапы и выручка по действующему прайсу.</span></div><div><strong>Время</strong><span>Средняя длительность завершённого визита.</span></div><div><strong>Повторы</strong><span>Завершённые визиты пациентов с предыдущим чекапом.</span></div><div><strong>Оценка</strong><span>Средняя оценка после посещения по пятибалльной шкале.</span></div></div><div id="demo-operations" class="demo-operations"></div></div></section>
+  </main>
+
+  <footer class="site-footer"><div class="shell footer-inner"><div class="brand"><span class="brand-mark">✳</span><span>ПРАЙМ<span class="brand-dot">.</span></span></div><p>Демонстрационный продукт для хакатона</p><span>Астана · 2026</span></div></footer>
+</body>
+</html>

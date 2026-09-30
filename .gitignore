@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.chrome-test*/
+*-screenshot.png
+screenshot.png
+*.sqlite3
