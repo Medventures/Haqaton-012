@@ -55,6 +55,23 @@ class RecommendationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "500"):
             recommend(self.answers(notes="а" * 501))
 
+    def test_parent_fills_child_questionnaire(self):
+        for age in (0, 8, 17):
+            with self.subTest(age=age):
+                result = recommend({
+                    "patient_type": "child", "age": age, "sex": "female",
+                    "guardian_confirmed": True, "child_concerns": ["vision"],
+                    "child_chronic": False, "notes": "Носит очки",
+                }, today=date(2026, 9, 30))
+                self.assertEqual(result["checkup_id"], "child")
+                self.assertEqual(len(result["packages"]), 1)
+                self.assertEqual(result["report"]["profile"]["concerns"][0], "вопросы о зрении")
+                self.assertEqual(result["reminder_date"], "2026-10-30" if age == 0 else "2027-09-30")
+        with self.assertRaisesRegex(ValueError, "родитель"):
+            recommend({"patient_type": "child", "age": 8, "sex": "female", "guardian_confirmed": False})
+        with self.assertRaisesRegex(ValueError, "17"):
+            recommend({"patient_type": "child", "age": 18, "sex": "female", "guardian_confirmed": True})
+
 
 if __name__ == "__main__":
     unittest.main()

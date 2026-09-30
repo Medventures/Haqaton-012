@@ -4,3 +4,12 @@ __pycache__/
 *-screenshot.png
 screenshot.png
 *.sqlite3
+.chrome-qa*/
+.env
+.env.*
+!.env.example
+.venv/
+.pytest_cache/
+data/
+.qa-screenshots/
+playwright-report/

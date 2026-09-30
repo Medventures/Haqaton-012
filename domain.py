@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from assistant_logic import build_clarification, resolve_clarification
 
 
 PROGRAMS = {
@@ -39,12 +40,20 @@ PROGRAMS = {
         "includes": ["Врач-куратор и гинеколог", "Расширенные анализы", "ЭКГ, УЗИ и исследования по программе"],
     },
     "heart": {
-        "name": "Чекап «Сердце»",
+        "name": "Check-up «Сердце»",
         "audience": "Программа с акцентом на сердце и сосуды",
         "price_tenge": 69900,
         "duration_hours": "4–5 часов",
         "summary": "Программа для оценки состояния сердечно-сосудистой системы.",
         "includes": ["Врач-куратор", "Анализы, включая липидный профиль", "ЭКГ, ЭхоКГ и исследования сосудов"],
+    },
+    "child": {
+        "name": "Детский check-up PRIME",
+        "audience": "Детям до 18 лет, по анкете родителя",
+        "price_tenge": 49900,
+        "duration_hours": "2–3 часа",
+        "summary": "Профилактический осмотр ребёнка с педиатром.",
+        "includes": ["Осмотр педиатра", "Оценка роста и развития", "Обсуждение истории прививок и дальнейших шагов"],
     },
 }
 
@@ -59,6 +68,14 @@ FAMILY_HISTORY = {
     "heart": "сердечно-сосудистые заболевания",
     "diabetes": "сахарный диабет",
     "cancer": "онкологические заболевания",
+}
+CHILD_CONCERNS = {
+    "development": "вопросы о росте и развитии",
+    "vision": "вопросы о зрении",
+    "hearing": "вопросы о слухе",
+    "sleep": "вопросы о сне",
+    "frequent_illness": "частые болезни",
+    "other": "другие вопросы о здоровье",
 }
 
 
@@ -88,22 +105,29 @@ def _validate_answers(answers: dict) -> None:
         raise ValueError("Проверьте ответы в анкете.")
     if answers.get("urgent") is True:
         return
+    patient_type = answers.get("patient_type", "adult")
+    if patient_type not in ("adult", "child"):
+        raise ValueError("Выберите, для кого нужна программа.")
     age = answers.get("age")
-    if isinstance(age, bool) or not isinstance(age, int) or not 18 <= age <= 100:
-        raise ValueError("Укажите возраст от 18 до 100 лет.")
+    if isinstance(age, bool) or not isinstance(age, int) or not (0 <= age <= 17 if patient_type == "child" else 18 <= age <= 100):
+        raise ValueError("Укажите возраст ребёнка от 0 до 17 лет." if patient_type == "child" else "Укажите возраст от 18 до 100 лет.")
     if answers.get("sex") not in ("male", "female"):
-        raise ValueError("Выберите пол для подбора программы.")
+        raise ValueError("Выберите пол ребёнка." if patient_type == "child" else "Выберите пол для подбора программы.")
+    if patient_type == "child" and answers.get("guardian_confirmed") is not True:
+        raise ValueError("Анкету ребёнка должен заполнить родитель или законный представитель.")
     notes = answers.get("notes", "")
     if not isinstance(notes, str) or len(notes) > 500:
         raise ValueError("Дополнительный ответ должен быть короче 500 символов.")
     preferred_time = answers.get("preferred_time", "any")
     if preferred_time not in ("any", "morning", "later"):
         raise ValueError("Выберите удобное время посещения.")
-    for field, allowed in (("concerns", CONCERNS), ("family", FAMILY_HISTORY)):
+    fields = (("child_concerns", CHILD_CONCERNS),) if patient_type == "child" else (("concerns", CONCERNS), ("family", FAMILY_HISTORY))
+    for field, allowed in fields:
         values = answers.get(field, [])
         if not isinstance(values, list) or any(not isinstance(item, str) or item not in allowed for item in values):
             raise ValueError("Проверьте выбранные ответы в анкете.")
-    for field in ("smoking", "low_activity", "chronic", "pregnancy", "urgent"):
+    boolean_fields = ("child_chronic", "urgent") if patient_type == "child" else ("smoking", "low_activity", "chronic", "pregnancy", "urgent")
+    for field in boolean_fields:
         if not isinstance(answers.get(field, False), bool):
             raise ValueError("Проверьте ответы в анкете.")
     last_checkup = answers.get("last_checkup")
@@ -111,12 +135,19 @@ def _validate_answers(answers: dict) -> None:
         try:
             parsed = date.fromisoformat(last_checkup)
         except (TypeError, ValueError) as exc:
-            raise ValueError("Проверьте дату последнего чекапа.") from exc
+            raise ValueError("Проверьте дату последнего check-up.") from exc
         if parsed > date.today():
-            raise ValueError("Дата последнего чекапа не может быть в будущем.")
+            raise ValueError("Дата последнего check-up не может быть в будущем.")
 
 
 def _route(program_id: str) -> list[dict]:
+    if program_id == "child":
+        return [
+            {"time": "09:00", "title": "Встреча родителя и ребёнка", "detail": "Сотрудник клиники уточнит данные анкеты."},
+            {"time": "09:30", "title": "Осмотр педиатра", "detail": "Врач обсудит развитие, самочувствие и историю прививок."},
+            {"time": "10:30", "title": "Дополнительные шаги", "detail": "Если потребуется, педиатр назначит исследования или консультации."},
+            {"time": "11:30", "title": "План для семьи", "detail": "Педиатр объяснит результаты осмотра и дальнейшие действия."},
+        ]
     route = [
         {"time": "08:30", "title": "Встреча с врачом-куратором", "detail": "Врач уточняет ответы и подтверждает план."},
         {"time": "09:15", "title": "Лабораторные анализы", "detail": "Сдача анализов по выбранной программе."},
@@ -130,14 +161,72 @@ def _route(program_id: str) -> list[dict]:
     return route
 
 
+def clarify(answers: dict) -> dict:
+    """Ask one contextual question after validating the original questionnaire."""
+    _validate_answers(answers)
+    if answers.get("urgent") or (answers.get("patient_type", "adult") == "adult" and answers.get("sex") == "female" and answers.get("pregnancy")):
+        return {"status": "skip"}
+    return build_clarification(answers)
+
+
 def recommend(answers: dict, *, today: date | None = None) -> dict:
+    result = _recommend_base(answers, today=today)
+    if result["status"] != "recommended" or "clarification" not in answers:
+        return result
+    clarification = resolve_clarification(answers, answers["clarification"])
+    if clarification["action"] in ("urgent", "consultation"):
+        return {
+            "status": clarification["action"],
+            "title": clarification["impact_title"],
+            "message": clarification["impact"],
+            "clarification": clarification,
+        }
+    result["clarification"] = clarification
+    result["report"]["clarification"] = clarification
+    if not clarification["skipped"]:
+        result["report"]["sections"].insert(1, {"title": "Уточнение для врача", "status": "Готово"})
+        # Keep the physician handoff when the patient switches packages.
+        routes = [result["route"], *(package["route"] for package in result["packages"])]
+        for route in routes:
+            physician_step = route[1] if result["checkup_id"] == "child" else route[0]
+            physician_step["detail"] += " " + clarification["route_note"]
+    return result
+
+
+def _recommend_base(answers: dict, *, today: date | None = None) -> dict:
     """Select a published programme and return patient-friendly Russian reasons."""
     _validate_answers(answers)
     if answers.get("urgent"):
         return {
             "status": "urgent",
             "title": "Сначала обратитесь за медицинской помощью",
-            "message": "При сильной боли в груди, выраженной одышке или внезапном ухудшении самочувствия не ждите чекапа. Обратитесь за срочной медицинской помощью.",
+            "message": "При сильной боли в груди, выраженной одышке или внезапном ухудшении самочувствия не ждите check-up. Обратитесь за срочной медицинской помощью.",
+        }
+    if answers.get("patient_type") == "child":
+        today = today or date.today()
+        program = PROGRAMS["child"]
+        concerns = list(dict.fromkeys(answers.get("child_concerns", [])))
+        reasons = [f"Возраст ребёнка — {age_in_words(answers['age'])}", "Анкету заполнил родитель или законный представитель"]
+        reasons.extend(f"Вы отметили {CHILD_CONCERNS[item]}" for item in concerns)
+        if answers.get("child_chronic"):
+            reasons.append("Вы указали хроническое заболевание ребёнка; план уточнит педиатр")
+        return {
+            "status": "recommended", "checkup_id": "child", "name": program["name"],
+            "audience": program["audience"], "summary": program["summary"],
+            "price_tenge": program["price_tenge"], "duration_hours": program["duration_hours"],
+            "packages": [{"id": "child", **program, "route": _route("child"), "suitable": True}],
+            "includes": program["includes"], "reasons": reasons, "route": _route("child"),
+            "report": {
+                "created_at": today.isoformat(),
+                "profile": {"patient_type": "child", "age": answers["age"], "sex": answers["sex"], "concerns": [CHILD_CONCERNS[item] for item in concerns], "family": [], "chronic": answers.get("child_chronic", False), "notes": answers.get("notes", "").strip()},
+                "sections": [
+                    {"title": "Анкета родителя", "status": "Готово"},
+                    {"title": "Осмотр педиатра", "status": "Ожидается"},
+                    {"title": "Заключение врача", "status": "Ожидается"},
+                ],
+            },
+            "reminder_date": add_months(today, 1 if answers["age"] == 0 else 12).isoformat(),
+            "note": "Это пример детской программы. Состав, цена и сроки осмотров подтверждаются педиатром и клиникой. Ежегодный профилактический осмотр ребёнка можно пройти по месту прикрепления.",
         }
     if answers["sex"] == "female" and answers.get("pregnancy"):
         return {
@@ -163,7 +252,7 @@ def recommend(answers: dict, *, today: date | None = None) -> dict:
     if answers.get("chronic"):
         reasons.append("Вы указали хроническое заболевание; программу нужно обсудить с врачом")
     if answers.get("last_checkup"):
-        reasons.append("Последний чекап был " + date.fromisoformat(answers["last_checkup"]).strftime("%d.%m.%Y"))
+        reasons.append("Последний check-up был " + date.fromisoformat(answers["last_checkup"]).strftime("%d.%m.%Y"))
 
     today = today or date.today()
     return {
@@ -180,7 +269,7 @@ def recommend(answers: dict, *, today: date | None = None) -> dict:
         "route": _route(program_id),
         "report": {
             "created_at": today.isoformat(),
-            "profile": {"age": answers["age"], "sex": answers["sex"], "concerns": [CONCERNS[item] for item in concerns], "family": [FAMILY_HISTORY[item] for item in family], "notes": answers.get("notes", "").strip()},
+            "profile": {"patient_type": "adult", "age": answers["age"], "sex": answers["sex"], "concerns": [CONCERNS[item] for item in concerns], "family": [FAMILY_HISTORY[item] for item in family], "notes": answers.get("notes", "").strip()},
             "sections": [
                 {"title": "Анкета и подбор", "status": "Готово"},
                 {"title": "Анализы и исследования", "status": "Ожидаются"},

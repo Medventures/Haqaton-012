@@ -1,0 +1,6 @@
+-r requirements.txt
+# Uses an existing Chrome/Chromium executable; no browser download is needed.
+playwright==1.63.0
+greenlet==3.5.6
+pyee==13.0.1
+typing_extensions==4.16.0

@@ -17,3 +17,6 @@
 @media(max-width:420px){.calendar-days{grid-template-columns:repeat(3,minmax(0,1fr))}.calendar-times{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media print{.booking-section{display:none!important}}
 .alternative-disabled{background:#f8faf7}.package-unavailable{border:1px solid #e0e9df;color:#8b9b8d;border-radius:9px;padding:14px;text-align:center;font-size:12px;font-weight:700}
+.section-heading>div,.report-row strong{min-width:0;overflow-wrap:anywhere}
+@media(max-width:700px){.section-heading{flex-wrap:wrap}.section-heading>div{max-width:100%}}
+.patient-choice .choice-pill{min-width:140px}.child-intro{background:#edf6ed;border-radius:9px;padding:13px 15px;color:#51745b;font-size:12px;line-height:1.6;margin-bottom:24px}.guardian-row{display:flex;align-items:flex-start;gap:10px;border:1px solid #cfe2d0;background:#f3f8f2;border-radius:9px;padding:14px;color:#315b3e;font-size:12px;line-height:1.5;margin:3px 0 20px}.guardian-row input{margin-top:2px;accent-color:#397d55}.guardian-row b{color:#c57152}
